@@ -69,12 +69,14 @@ while True:
     #T_inf = float(input("Enter Temperature inf :"))
 
     UserFluidProp = grantPropFluid(stateFluid[UserstateFluid-1],UsertypeFluid,Tf) #return dict
-
+    neu = UserFluidProp["neu"]
+    if UserstateFluid == 1: 
+        neu = neu*1.0133e5/P_inf
     #check transition point
-    xc = UserFluidProp["neu"]*5e5/U_inf 
+    xc = neu*5e5/U_inf 
 
     flowtype = ""
-    if U_inf*L/UserFluidProp["neu"] : 
+    if U_inf*L/neu : 
         flowtype = "Laminar" 
         print("Laminar entire plate")
     else: 
@@ -93,7 +95,7 @@ while True:
         if flowtype == "Laminar":
             if UseValue == 1: #Local
                 x = float(input("Enter x(position from starting length)  [m]:"))
-                Rex = U_inf*x/UserFluidProp["neu"]
+                Rex = U_inf*x/neu
                 delta = 5*x/(Rex**0.5)
                 delta_t = delta/(UserFluidProp["Pr"]**(1/3))
                 if  UserFluidProp["Pr"] >= 0.6 : Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))
@@ -103,20 +105,21 @@ while True:
                 cfx = 0.664*(Rex**-0.5)
             else: 
 
-                Rex = U_inf*L/UserFluidProp["neu"]
+                Rex = U_inf*L/neu
+                print(Rex,neu)
                 Nux = 0.664*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
                 if  UserFluidProp["Pr"] < 0.6 :  Nux = Nux*2
                 cfx =1.328*(Rex**-0.5)
         elif flowtype == "turbulent" :
             x = float(input("Enter x(position from starting length)  [m]:"))
-            Rex = U_inf*x/UserFluidProp["neu"]
+            Rex = U_inf*x/neu
             delta = 0.37*x*(Rex**-0.2)
             cfx =0.0592*(Rex**-0.2)
             Nux = 0.0296*Rex*0.8*UserFluidProp["Pr"]**(1/3) 
         elif flowtype == "mixed":
             if UseValue == 1: #Local
                 x = float(input("Enter x(position from starting length)  [m]:"))
-                Rex = U_inf*x/UserFluidProp["neu"]
+                Rex = U_inf*x/neu
                 delta = 5*x/(Rex**0.5)
                 delta_t = delta/(UserFluidProp["Pr"]**(1/3))
                 if  UserFluidProp["Pr"] >= 0.6 : Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))
@@ -126,26 +129,26 @@ while True:
                 cfx = 0.664*(Rex**-0.5)
             else:
                 a = 871
-                Rex = U_inf*x/UserFluidProp["neu"] 
+                Rex = U_inf*x/neu 
                 Nux = 0.037*Rex**(4/5)-a 
                 cfx = 0.074*Rex**(-1/5)-2*a/Rex  
         #display h and q
         print(UserFluidProp["k"],x,Nux,Rex)
         h = Nux*UserFluidProp["k"]/x
-        print("h = ",h)
-        print("q = ",h*(Ts-T_inf))
+        print("h = ",round(h,3),"[W/m^2 K]")
+        print("q = ",round(h*(Ts-T_inf),3),"[W/m^2]")
     elif condition == 2:#unheated
         if flowtype == "Laminar":
             if UseValue == 1:#Local
                 x = float(input("Enter x(position from starting length)  [m]:"))
-                Rex = U_inf*startHeatLen/UserFluidProp["neu"]
+                Rex = U_inf*startHeatLen/neu
                 if  UserFluidProp["Pr"] >= 0.6 : Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))
                 else:
                     if UserFluidProp["Pr"]<=0.05 : Nux = 0.565*(Rex*UserFluidProp["Pr"])**0.5
                     else: Nux = 0.3387*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))/(1+(0.0468/UserFluidProp["Pr"])**(2/3))**0.25
                 Nux= Nux/(1-(startHeatLen-x)**0.75)**(1/3)
             else: #???? check
-                Rex = U_inf*L/UserFluidProp["neu"]
+                Rex = U_inf*L/neu
                 Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
                 if  UserFluidProp["Pr"] < 0.6 :  Nux = Nux*2
 
@@ -153,18 +156,18 @@ while True:
         elif flowtype == "turbulent":
             if UseValue == 1:
                 x = float(input("Enter x(position from starting length)  [m]:"))
-                Rex = U_inf*startHeatLen/UserFluidProp["neu"]
+                Rex = U_inf*startHeatLen/neu
                 Nux = 0.0296*Rex*0.8*UserFluidProp["Pr"]**(1/3)
                 Nux= Nux/(1-(startHeatLen-x)**0.9)**(1/9)
             else:
-                Rex = U_inf*L/UserFluidProp["neu"]
+                Rex = U_inf*L/neu
                 Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
                 if  UserFluidProp["Pr"] < 0.6 :  Nux = Nux*2
                 NuL = Nux*L/(L-startHeatLen)*(1-(startHeatLen/L)**90)**(8/9)
     elif condition ==3: 
         print("Local only")
         x = float(input("Enter x(position from starting length)  [m]:"))
-        Rex = U_inf*x/UserFluidProp["neu"] 
+        Rex = U_inf*x/neu 
         if flowtype == "Laminar":
             Nux = 0.453*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
         elif flowtype == "turbulent":
