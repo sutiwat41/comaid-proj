@@ -5,11 +5,17 @@ from random import *
 
 typePlate = ["Isothermal","Unheated starting length","Uniform heat flux"]
 orientation = ["single plate","multiple plate"]
-typeFluid = xlsxDf.sheet_names#["Compressible fluid(Ideal Gas)","Incompressible fluid"]
+stateFluid = ["gas","liquid"]
+typeFluid =dict()
+typeFluid_text = dict()
 
+stateFluid_text = [str(e+1)+" for "+stateFluid[e] for e in range(len(stateFluid))]
 typePlate_text = [str(e+1)+" for "+typePlate[e] for e in range(len(typePlate))]
 orientation_text = [str(e+1)+" for "+orientation[e] for e in range(len(orientation))]
-typeFluid_text = [str(e+1)+" for "+typeFluid[e] for e in range(len(typeFluid))]
+#["Compressible fluid(Ideal Gas)","Incompressible fluid"]
+for i in stateFluid:
+    typeFluid[i] = xlsxDf[i].sheet_names
+    typeFluid_text[i] = [str(e+1)+" for "+typeFluid[i][e] for e in range(len(typeFluid[i]))]
 
 
 print("#"+"-"*5+"Welcome to Program Calculation of External flow over flat plate"+"-"*5+"#"+"\n")
@@ -30,26 +36,30 @@ while True:
     condition = int(input("Enter condition :")) 
     print()
 
-    print("Please select typeFluid:\n"+"\n".join(typeFluid_text) )
+    print("Please select state of Fluid:\n"+"\n".join(stateFluid_text) )
+    UserstateFluid  = int(input("Enter state of Fluid :")) 
+    print()
+
+    print("Please select type of Fluid:\n"+"\n".join(typeFluid_text[stateFluid[UserstateFluid-1]]) )
     UsertypeFluid = int(input("Enter typeFluid :")) 
     print()
 
-    if typeFluid == 1: P_inf =  float(input("Enter p_inf :")) #External flow pressure
+    if UserstateFluid == 1 : P_inf =  float(input("Enter External flow pressure [Pa] :")) #External flow pressure
 
-    T_inf =  float(input("Enter external flow temperature [K]:")) #external flow temperature
+    T_inf =  float(eval(input("Enter external flow temperature [K]:"))) #external flow temperature
     U_inf =  float(input("Enter flow velocity [m/s] :")) #flow velocity
     #condition
     if condition == 1 : #isothermal
-        Ts = float(input("Enter Surface Temperature [K]:"))
+        Ts = float(eval(input("Enter Surface Temperature [K]:")))
         Tf = (Ts+T_inf)/2 #display ref T = Tf 
     elif condition == 2:
-        Ts = float(input("Enter Surface Temperature [K]:"))
+        Ts = float(eval(input("Enter Surface Temperature [K]:")))
         startHeatLen = float(input("Enter Start Heating Length [m/s] :"))
         Tf = (Ts+T_inf)/2
     elif condition == 3: 
         HeatFlux = float(input("Enter Heat Flux(W/m^2) :"))
         if (input("Local Surface Temperature known(y/n)? :").lower() == "y"):
-            Ts = float(input("Enter Surface Temperature (default 0 ) :"))
+            Ts = float(eval(input("Enter Surface Temperature (default 0 ) :")))
             Tf = (Ts+T_inf)/2
         else: Tf = T_inf+uniform(-10,10) #random -10 to 10
             
@@ -58,14 +68,23 @@ while True:
 
     #T_inf = float(input("Enter Temperature inf :"))
 
-    UserFluidProp = grantPropFluid(UsertypeFluid,Tf) #return dict
+    UserFluidProp = grantPropFluid(stateFluid[UserstateFluid-1],UsertypeFluid,Tf) #return dict
 
     #check transition point
-    xc = UserFluidProp["neu"]*5e5/U_inf
+    xc = UserFluidProp["neu"]*5e5/U_inf 
+
     flowtype = ""
-    if 0.95<=xc/L<=1 : flowtype = "Laminar" #print("Laminar entire plate")
-    elif 0.001<=xc/L<=0.95: flowtype = "mixed" #print("mixed bl")
-    else: flowtype ="turbulent" #print("turbulent")
+    if U_inf*L/UserFluidProp["neu"] : 
+        flowtype = "Laminar" 
+        print("Laminar entire plate")
+    else: 
+        if 0.05*L<xc< 0.95*L:
+            flowtype = "mixed" 
+            print("mixed bl")
+
+        elif xc<0.05*L: 
+            flowtype ="turbulent" 
+            print("turbulent")
 
     UseValue = int(input("Enter 1-Local /2-avg :"))
     x = L #set default parameter
@@ -85,7 +104,7 @@ while True:
             else: 
 
                 Rex = U_inf*L/UserFluidProp["neu"]
-                Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
+                Nux = 0.664*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
                 if  UserFluidProp["Pr"] < 0.6 :  Nux = Nux*2
                 cfx =1.328*(Rex**-0.5)
         elif flowtype == "turbulent" :
@@ -111,6 +130,7 @@ while True:
                 Nux = 0.037*Rex**(4/5)-a 
                 cfx = 0.074*Rex**(-1/5)-2*a/Rex  
         #display h and q
+        print(UserFluidProp["k"],x,Nux,Rex)
         h = Nux*UserFluidProp["k"]/x
         print("h = ",h)
         print("q = ",h*(Ts-T_inf))

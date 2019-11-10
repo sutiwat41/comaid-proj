@@ -1,7 +1,7 @@
 #grant data from excel
 import pandas as pd
 
-xlsxDf = pd.ExcelFile('table A5.xlsx')
+xlsxDf = {"liquid" : pd.ExcelFile('table liquid.xlsx'), "gas": pd.ExcelFile('table gas.xlsx')}
 
 
 def LinearInterpolate(P1,P2,coor,val): #return type float / str "Error"
@@ -40,10 +40,11 @@ def binarySearchVal(left,right,err): #bisection method
         if abs((newMid-mid)/newMid)*100 < err: break
     return newMid 
 
-def grantPropFluid(f_type,T_f): #fluid type / Temp fluid
-    #print(xlsxDf.sheet_names[f_type-1])
-    
-    table = pd.read_excel(xlsxDf, sheet_name='Engine Oil (Unused)')
+def grantPropFluid(f_state,f_type,T_f): #fluid type / Temp fluid
+    #print(xlsxDf[f_state].sheet_names[f_type-1])
+    select_fluid =xlsxDf[f_state].sheet_names[f_type-1]
+
+    table = pd.read_excel(xlsxDf[f_state], sheet_name=select_fluid)
     table_head = list(table.columns)
     prop = dict()
     prop["Tf"] = T_f 
@@ -58,9 +59,10 @@ def grantPropFluid(f_type,T_f): #fluid type / Temp fluid
             p1 = (table.at[Index,table_head[0]],table.at[Index,e])
             p2 = (table.at[Index+1,table_head[0]],table.at[Index+1,e])
             #print(p1,p2)
-            prop[head[i]] = LinearInterpolate(p1,p2,1,T_f)#/table.at[1,e]
+            prop[head[i]] = LinearInterpolate(p1,p2,1,T_f)/table.at[1,e]
     else:
-        for i in [4,5,7]: prop[head[i]] = table.at[result[1]+2,table_head[i]]
+        for i in [4,5,7]: 
+            prop[head[i]] = table.at[result[1]+2,table_head[i]]/table.at[1,table_head[i]]
     return prop
 
 
