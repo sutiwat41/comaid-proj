@@ -26,10 +26,7 @@ while True:
     orientation = int(input("Enter orientation :")) 
     #input("\nPress any key to continue . . .")
     print()
-    if orientation == 1: n = 1
-    elif orientation == 2: n = float(input("Enter Number of plates :"))
-    else : print("Error")
-    L = float(input("Enter Length of the plate [m]:"))*n
+
 
 
     print("Please select condition:\n"+"\n".join(typePlate_text) )
@@ -44,6 +41,11 @@ while True:
     UsertypeFluid = int(input("Enter typeFluid :")) 
     print()
 
+    if orientation == 1: n = 1
+    elif orientation == 2: n = float(input("Enter Number of plates :"))
+    else : print("Error")
+    L = float(eval(input("Enter Length of the plate [m]:")))*n
+
     if UserstateFluid == 1 : P_inf =  float(input("Enter External flow pressure [Pa] :")) #External flow pressure
 
     T_inf =  float(eval(input("Enter external flow temperature [K]:"))) #external flow temperature
@@ -57,7 +59,7 @@ while True:
         startHeatLen = float(input("Enter Start Heating Length [m/s] :"))
         Tf = (Ts+T_inf)/2
     elif condition == 3: 
-        HeatFlux = float(input("Enter Heat Flux(W/m^2) :"))
+        HeatFlux = float(eval(input("Enter Heat Flux(W/m^2) :")))
         if (input("Local Surface Temperature known(y/n)? :").lower() == "y"):
             Ts = float(eval(input("Enter Surface Temperature (default 0 ) :")))
             Tf = (Ts+T_inf)/2
@@ -166,7 +168,7 @@ while True:
                 NuL = Nux*L/(L-startHeatLen)*(1-(startHeatLen/L)**90)**(8/9)
     elif condition ==3: 
         print("Local only")
-        x = float(input("Enter x(position from starting length)  [m]:"))
+        x = float(eval(input("Enter x(position from starting length)  [m]:")))
         Rex = U_inf*x/neu 
         if flowtype == "Laminar":
             Nux = 0.453*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
@@ -176,6 +178,9 @@ while True:
         #display data
         h = Nux*UserFluidProp["k"]/x
         print("Ts(x) = ",T_inf+HeatFlux/(h*x))
+        NuL =0.68*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))
+        print("NuL",NuL)
+        print("Ts-Tinf [K]",HeatFlux*L/(NuL*UserFluidProp["k"]))
         #NuL = 0.680
     if input("\nPress q/Q to exit or Press others keys to continue . . .").lower().strip() == "q":
         break
