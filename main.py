@@ -56,16 +56,23 @@ while True:
         Tf = (Ts+T_inf)/2 #display ref T = Tf 
     elif condition == 2:
         Ts = float(eval(input("Enter Surface Temperature [K]:")))
+        if (input("Do you want to assume film Temperature(y/n)? :").lower() == "y"):
+            Tf = float(eval(input("Enter film Temperature [K]:")))
+        else:
+            Tf = (Ts+T_inf)/2
+        print("Film Temperature =",Tf,"[K]")
         startHeatLen = float(input("Enter Start Heating Length [m] :"))
-        Tf = (Ts+T_inf)/2
+        
     elif condition == 3: 
-        HeatFlux = float(eval(input("Enter Heat Flux(W/m^2) :")))
+        HeatFlux = float(eval(input("Enter Heat Flux [W/m^2] :")))
         if (input("Local Surface Temperature known(y/n)? :").lower() == "y"):
             Ts = float(eval(input("Enter Surface Temperature [K]:")))
             Tf = (Ts+T_inf)/2
+        elif (input("Do you want to assume film Temperature(y/n)? :").lower() == "y"):
+            Tf = float(eval(input("Enter film Temperature [K]:")))
         else: 
             Tf = T_inf+uniform(-10,10) #random -10 to 10
-            print("Guess Surface Temperature =",Tf,"[K]")
+            print("Guess film Temperature =",Tf,"[K]")
             
     else: print("Error")
 
@@ -102,7 +109,7 @@ while True:
 
     print("\nDo you want to add assumption?")
     print("L - Laminar flow")
-    print("T - Turbulent flow")
+    print("T - Turbulent flow\n")
     print("Press others key for No . . .")
     ass = input("Add assumption :").strip().upper()
     if ass == "L" :flowtype = "Laminar" 
@@ -156,32 +163,42 @@ while True:
                 cfx = 0.074*Rex**(-1/5)-2*a/Rex  
         #display h and q
         #print(UserFluidProp["k"],x,Nux,Rex)
-        print("Nu = ",Nux)
+        print("Nu = ",round(Nux,4))
         h = Nux*UserFluidProp["k"]/x
-        print("h = ",round(h,3),"[W/m^2 K]")
-        print("q = ",round(h*(Ts-T_inf),3),"[W/m^2]")
+        print("h = ",round(h,4),"[W/m^2 K]")
+        print("q = ",round(h*(Ts-T_inf),4),"[W/m^2]")
     elif condition == 2:#unheated
         if flowtype == "Laminar":
             if UseValue == 1:#Local
-                x = float(eval(input("Enter x(position from starting length)  [m]:")))
-                Rex = U_inf*startHeatLen/neu
+                x = float(eval(input("Enter position from starting length (x)  [m]:")))
+                Rex = U_inf*x/neu
                 if  UserFluidProp["Pr"] >= 0.6 : Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))
                 else:
                     if UserFluidProp["Pr"]<=0.05 : Nux = 0.565*(Rex*UserFluidProp["Pr"])**0.5
                     else: Nux = 0.3387*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))/(1+(0.0468/UserFluidProp["Pr"])**(2/3))**0.25
-                Nux= Nux/(1-(startHeatLen-x)**0.75)**(1/3)
+                Nux= Nux/(1-(startHeatLen/x)**0.75)**(1/3)
+
+                h = Nux*UserFluidProp["k"]/x
+                
+                print("Nu =",Nux,"When x = %.4f m"%(x))
+                print("h = ",round(h,4),"[W/m^2.K]")
             else: #???? check
                 Rex = U_inf*L/neu
                 Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
                 if  UserFluidProp["Pr"] < 0.6 :  Nux = Nux*2
+                NuL = Nux*L/(L-startHeatLen)*(1-(startHeatLen/L)**12)**(2/3)
+                h = NuL*UserFluidProp["k"]/L
 
-                NuL = Nux*L/(L-startHeatLen)*(1-(startHeatLen/L)**15)**(2/3)
+                print("Nu =",round(NuL,4))
+                print("h = ",round(h,4),"[W/m^2.K]")
+            print("Rex = ",round(Rex,4))
+            
         elif flowtype == "turbulent":
             if UseValue == 1:
-                x = float(eval(input("Enter x(position from starting length)  [m]:")))
+                x = float(eval(input("Enter position from starting length (x)  [m]:")))
                 Rex = U_inf*startHeatLen/neu
                 Nux = 0.0296*Rex*0.8*UserFluidProp["Pr"]**(1/3)
-                Nux= Nux/(1-(startHeatLen-x)**0.9)**(1/9)
+                Nux= Nux/(1-(startHeatLen/x)**0.9)**(1/9)
             else:
                 Rex = U_inf*L/neu
                 Nux = 0.332*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3)) 
@@ -198,11 +215,12 @@ while True:
 
         #display data
         h = Nux*UserFluidProp["k"]/x
-        print("h = ",h)
-        print("Ts(x) = ",T_inf+HeatFlux/(h*x))
+        print("Re =",round(Rex,4))
+        print("h = ",round(h,4),"[W/m^2.K]")
+        print("Ts(x) =",round(T_inf+HeatFlux/(h*x),4),"[K] When x = ",round(x,4),"[m]")
         NuL =0.68*(Rex**0.5)*(UserFluidProp["Pr"]**(1/3))
-        print("NuL",NuL)
-        print("Ts-Tinf [K]",HeatFlux*L/(NuL*UserFluidProp["k"]))
+        print("NuL =",round(NuL,4))
+        print("Surface Temperature average = ",round(T_inf+HeatFlux*L/(NuL*UserFluidProp["k"]),4),"[K]")
         #NuL = 0.680
     if input("\nPress q/Q to exit or Press others keys to continue . . .\n").lower().strip() == "q":
         break
